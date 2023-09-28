@@ -15,52 +15,17 @@ namespace cSharp_BankSystem_REST_API.Controllers
             _context = DB;
         }
         public List<Account> userAccounts = new List<Account>();
-        [HttpGet]
-        public void profileMenu(User authenticatedUser, List<Account> userAccounts)
-        {
-            if (authenticatedUser != null)
-            {
-                Console.WriteLine($"Welcome, {authenticatedUser.Name}\n\n");
-
-                userAccounts = GetUserAccounts(authenticatedUser.User_Id);
-
-                if (userAccounts.Count > 0)
-                {
-                    Console.ForegroundColor = ConsoleColor.Cyan;
-                    Console.WriteLine("Your Accounts:");
-                    Console.ResetColor();
-
-                    foreach (var account in userAccounts)
-                    {
-                        Console.ForegroundColor = ConsoleColor.DarkYellow;
-                        Console.WriteLine($"Account Number:      {account.Account_Id}");
-                        Console.WriteLine($"Account Holder Name: {account.HolderName}");
-                        Console.WriteLine($"Account Balance:     {account.Balance} OMR");
-                        Console.ResetColor();
-                        Console.WriteLine("____________________________________");
-                        Console.WriteLine();
-                    }
-                }
-                else { Console.WriteLine("You dont have any accounts. Please add one\n\n"); }
-
-            }
-            else
-            {
-                Console.WriteLine("Login failed");
-
-            }
-        }
         [HttpPost("CreatAccount")]
-        private void createAccount(User authenticatedUser, decimal initialBalance)
+        public void createAccount(User authenticatedUser, decimal initialBalance)
         {
-            
-                decimal balance = initialBalance;
-                int UserID = authenticatedUser.User_Id;
-                string AccountHolderName = authenticatedUser.Name;
-                insertAccount(balance, UserID, AccountHolderName);
+
+            decimal balance = initialBalance;
+            int UserID = authenticatedUser.User_Id;
+            string AccountHolderName = authenticatedUser.Name;
+            insertAccount(balance, UserID, AccountHolderName);
 
         }
-        private static void insertAccount(decimal balance, int UserID, string AccountHolderName)
+        public static void insertAccount(decimal balance, int UserID, string AccountHolderName)
         {
             try
             {
@@ -77,6 +42,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
             }
 
         }
+        [HttpGet("getUserAccount")]
         public static List<Account> GetUserAccounts(int userId)
         {
             using (var _context = new ApplicationDbContext())
@@ -89,7 +55,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
             }
         }
         [HttpDelete("deleteUserAccount")]
-        private void deleteAccountServer(int accountIdToDelete)
+        public void deleteAccountServer(int accountIdToDelete)
         {
             try
             {
@@ -113,7 +79,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
             catch (Exception ex) { Console.WriteLine(ex.ToString()); }
         }
         [HttpDelete("deleteUser")]
-        private void deleteUserServer(int userIdToDelete)
+        public void deleteUserServer(int userIdToDelete)
         {
             try
             {

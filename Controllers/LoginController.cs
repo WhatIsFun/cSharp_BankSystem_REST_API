@@ -8,69 +8,44 @@ namespace cSharp_BankSystem_REST_API.Controllers
     [ApiController]
     public class LoginController : ControllerBase
     {
-            public static ApplicationDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-            public LoginController(ApplicationDbContext DB)
-            {
-                _context = DB;
-            }
+        public LoginController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
         [HttpPost("Login")]
-            public void Login(string email, string password)
+        public IActionResult AuthenticateUser(string email, string password)
+        {
+            try
             {
-                // Authenticate the user
-                User authenticatedUser = AuthenticateUser(email, password);
+                // Find the user by email
+                User user = _context.Users.SingleOrDefault(u => u.Email == email);
 
-                if (authenticatedUser == null)
+                if (user != null)
                 {
-                    Console.WriteLine("Invalid email or password. Please try again.");
-                    Console.WriteLine("\n\n\n\n\n\nPress any key to try again.....");
-                    Console.ReadLine();
-                    return;
-                }
-                else
-                {
-                    // User is authenticated; grant access to the program
-                    Console.WriteLine("Login successful! Welcome, " + authenticatedUser.Name);
-                    loading();
-                    Console.Clear();
-                }
-            }
-            private static User AuthenticateUser(string email, string password)
-            {
-                using (var _context = new ApplicationDbContext())
-                {
-                    // Find the user by email
-                    User user = _context.Users.SingleOrDefault(u => u.Email == email);
-
-                    if (user != null)
+                    if (VerifyPassword(password, user.Password))
                     {
-                        if (VerifyPassword(password, user.Password))
-                        {
-                            // Password is correct; return the user
-                            return user;
-                        }
+                        // Password is correct; return the user
+                        return Ok(user);
                     }
-                    // No matching user or incorrect password; return null
-                    return null;
                 }
+                // No matching user or incorrect password; return Unauthorized
+                return Unauthorized();
             }
-
-            // Implement a password verification method
-            private static bool VerifyPassword(string inputPassword, string hashedPassword)
+            catch (Exception ex)
             {
-                return BCrypt.Net.BCrypt.Verify(inputPassword, hashedPassword);
+                // Log the exception for debugging
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
             }
-            public void loading()
-            {
-                string[] spinner = { "-", "\\", "|", "/" };
+        }
 
-                Console.Write("Loading ");
-                for (int i = 0; i < 10; i++)
-                {
-                    Console.Write(spinner[i % spinner.Length]);
-                    Thread.Sleep(200);
-                    Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
-                }
-            }
+        // Implement a password verification method
+        public bool VerifyPassword(string inputPassword, string hashedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(inputPassword, hashedPassword);
+        }
     }
 }
