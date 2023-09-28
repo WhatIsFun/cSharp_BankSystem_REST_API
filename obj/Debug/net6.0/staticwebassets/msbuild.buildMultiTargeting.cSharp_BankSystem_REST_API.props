@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\cSharp_BankSystem_REST_API.props" />
+</Project>

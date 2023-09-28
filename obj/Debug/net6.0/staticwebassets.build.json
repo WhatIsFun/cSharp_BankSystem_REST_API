@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "BFTwxQmdn68B15xY43tZAeWeN8mqckdjOyrmLMNgmKI=",
+  "Source": "cSharp_BankSystem_REST_API",
+  "BasePath": "_content/cSharp_BankSystem_REST_API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
