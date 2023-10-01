@@ -16,7 +16,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
         }
 
         [HttpPost("Login")]
-        public IActionResult AuthenticateUser(string email, string password)
+        public void AuthenticateUser(string email, string password)
         {
             try
             {
@@ -28,21 +28,23 @@ namespace cSharp_BankSystem_REST_API.Controllers
                     if (VerifyPassword(password, user.Password))
                     {
                         // Password is correct; return the user
-                        return Ok(user);
+                        Console.WriteLine(user.Name, email);
                     }
                 }
                 // No matching user or incorrect password; return Unauthorized
-                return Unauthorized();
+                 Console.WriteLine("Error");
             }
             catch (Exception ex)
             {
                 // Log the exception for debugging
                 Console.WriteLine(ex.Message);
-                return StatusCode(500, "An error occurred while processing your request.");
+                Console.WriteLine("An error occurred while processing your request.");
             }
         }
 
+
         // Implement a password verification method
+        [HttpGet]
         public bool VerifyPassword(string inputPassword, string hashedPassword)
         {
             return BCrypt.Net.BCrypt.Verify(inputPassword, hashedPassword);
