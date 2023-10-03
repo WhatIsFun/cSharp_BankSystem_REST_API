@@ -16,25 +16,35 @@ namespace cSharp_BankSystem_REST_API.Controllers
             _context = DB;
         }
         [HttpPost("Register")]
-        public void Register(string name, string email, string password)
+        public IActionResult Register(string name, string email, string password)
         {
-            if (!IsValidEmail(email))
+            try
             {
-                Console.WriteLine("Invalid email address.");
+                if (!IsValidEmail(email))
+                {
+                    return Unauthorized("Invalid email address.");
+                }
+
+                if (!IsValidPassword(password))
+                {
+                    return Unauthorized("Invalid password. Password must meet certain requirements.\nUppercase and Lowercase Letters\nDigits\nSpecial Characters (Minimum Length 8)");
+                    
+                }
+                string hashedPassword = HashPassword(password); //hashing the password 
+
+                // If email and password are valid, insert data into the database
+                InsertUserRegistrationData(name, email, hashedPassword);
+
+                
+                return Ok("User registration successful.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
             }
 
-            if (!IsValidPassword(password))
-            {
-                Console.WriteLine("Invalid password. Password must meet certain requirements.\nUppercase and Lowercase Letters\nDigits\nSpecial Characters (Minimum Length 8)");
-                return;
-            }
 
-            string hashedPassword = HashPassword(password); //hashing the password 
-
-            // If email and password are valid, insert data into the database
-            InsertUserRegistrationData(name, email, hashedPassword);
-
-            Console.WriteLine("User registration successful.");
         }
 
         private static bool IsValidEmail(string email)
