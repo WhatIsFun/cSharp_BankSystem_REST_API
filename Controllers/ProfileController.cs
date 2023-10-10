@@ -14,93 +14,117 @@ namespace cSharp_BankSystem_REST_API.Controllers
         {
             _context = DB;
         }
-        public List<Account> userAccounts = new List<Account>();
+
         [HttpPost("CreatAccount")]
-        public void createAccount(User authenticatedUser, decimal initialBalance)
-        {
-
-            decimal balance = initialBalance;
-            int UserID = authenticatedUser.User_Id;
-            string AccountHolderName = authenticatedUser.Name;
-            insertAccount(balance, UserID, AccountHolderName);
-
-        }
-        public static void insertAccount(decimal balance, int UserID, string AccountHolderName)
+        public IActionResult CreateAccount(User authenticatedUser, decimal initialBalance)
         {
             try
             {
-                using (var _context = new ApplicationDbContext())
-                {
-                    var acc = new Account { User_Id = UserID, HolderName = AccountHolderName, Balance = balance };
-                    _context.Add(acc);
-                    _context.SaveChanges();
-                }
+                decimal balance = initialBalance;
+                int UserID = authenticatedUser.User_Id;
+                string AccountHolderName = authenticatedUser.Name;
+
+                InsertAccount(balance, UserID, AccountHolderName);
+
+                return Ok("Account created successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
+
+        public static void InsertAccount(decimal balance, int UserID, string AccountHolderName)
+        {
+            try
+            {
+                var acc = new Account { User_Id = UserID, HolderName = AccountHolderName, Balance = balance };
+                _context.Add(acc);
+                _context.SaveChanges();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-
         }
+
         [HttpGet("getUserAccount")]
-        public static List<Account> GetUserAccounts(int userId)
+        public IActionResult GetUserAccounts(int userId)
         {
-            using (var _context = new ApplicationDbContext())
+            try
             {
-                List<Account> accounts = _context.Accounts
+                var accounts = GetUserAccountsFromDatabase(userId);
+                return Ok(accounts);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
+        }
+
+        public static List<Account> GetUserAccountsFromDatabase(int userId)
+        {
+            List<Account> accounts = _context.Accounts
                     .Where(a => a.User_Id == userId)
                     .ToList();
 
-                return accounts;
-            }
+            return accounts;
         }
+
         [HttpDelete("deleteUserAccount")]
-        public void deleteAccountServer(int accountIdToDelete)
+        public IActionResult DeleteAccountServer(int accountIdToDelete)
         {
             try
             {
-                using (var _context = new ApplicationDbContext())
-                {
                     var accountToDelete = _context.Accounts.Find(accountIdToDelete);
 
-                    if (accountToDelete != null)
-                    {
-                        _context.Accounts.Remove(accountToDelete);
-                        _context.SaveChanges();
+                if (accountToDelete != null)
+                {
+                    _context.Accounts.Remove(accountToDelete);
+                    _context.SaveChanges();
 
-                        Console.WriteLine($"Account with ID {accountIdToDelete} deleted successfully.\nVisit nearest ATM to withdraw your balance");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Account with ID {accountIdToDelete} not found.");
-                    }
+                    return Ok($"Account with ID {accountIdToDelete} deleted successfully.\nVisit nearest ATM to withdraw your balance");
                 }
+                else
+                {
+                    return NotFound($"Account with ID {accountIdToDelete} not found.");
+                }
+                
             }
-            catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
         }
+
         [HttpDelete("deleteUser")]
-        public void deleteUserServer(int userIdToDelete)
+        public IActionResult DeleteUserServer(int userIdToDelete)
         {
             try
             {
-                using (var _context = new ApplicationDbContext())
-                {
                     var userDelete = _context.Users.Find(userIdToDelete);
 
-                    if (userDelete != null)
-                    {
-                        _context.Users.Remove(userDelete);
-                        _context.SaveChanges();
+                if (userDelete != null)
+                {
+                    _context.Users.Remove(userDelete);
+                    _context.SaveChanges();
 
-                        Console.WriteLine($"User with ID {userIdToDelete} deleted successfully.");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"User with ID {userIdToDelete} not found.");
-                    }
+                    return Ok($"User with ID {userIdToDelete} deleted successfully.");
                 }
+                else
+                {
+                    return NotFound($"User with ID {userIdToDelete} not found.");
+                }
+                
             }
-            catch (Exception ex) { Console.WriteLine(ex.ToString()); }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
         }
         private static bool VerifyPassword(string inputPassword, string hashedPassword)
         {

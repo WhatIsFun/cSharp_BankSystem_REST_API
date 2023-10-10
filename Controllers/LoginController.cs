@@ -1,6 +1,11 @@
 ﻿using cSharp_BankSystem_REST_API.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace cSharp_BankSystem_REST_API.Controllers
 {
@@ -14,31 +19,52 @@ namespace cSharp_BankSystem_REST_API.Controllers
         {
             _context = context;
         }
-
+        //[HttpPost("API-Login")]
+        //public IActionResult APILogin(string email, string password)
+        //{
+        //    AuthenticateUser(login);
+        //}
         [HttpPost("Login")]
-        public void AuthenticateUser(string email, string password)
+        public IActionResult AuthenticateUser(userLogin login)
         {
             try
             {
                 // Find the user by email
-                User user = _context.Users.SingleOrDefault(u => u.Email == email);
+                User user = _context.Users.SingleOrDefault(u => u.Email == login.Email);
 
                 if (user != null)
                 {
-                    if (VerifyPassword(password, user.Password))
+                    if (VerifyPassword(login.Password, user.Password))
                     {
-                        // Password is correct; return the user
-                        Console.WriteLine(user.Name, email);
+                        // Generate a JWT token
+                        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("this is my custom Secret key for authentication"));
+                        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                        var claims = new[]
+                        {
+                            new Claim(ClaimTypes.Name, user.Name),
+                            new Claim(ClaimTypes.Email, user.Email),
+                        };
+
+                        var token = new JwtSecurityToken(
+                            issuer: "Mohammed",
+                            audience: "Users",
+                            claims: claims,
+                            expires: DateTime.UtcNow.AddMinutes(20), // Token expiration time
+                            signingCredentials: credentials
+                        );
+                        Log.Information($"new Login username: {user.Name}, {user.Email}");
+                        return Ok(new JwtSecurityTokenHandler().WriteToken(token));
                     }
                 }
                 // No matching user or incorrect password; return Unauthorized
-                 Console.WriteLine("Error");
+                return Unauthorized("Invalid email or password.");
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging
+                Log.Error("new error to login employee : " + login.Email);
                 Console.WriteLine(ex.Message);
-                Console.WriteLine("An error occurred while processing your request.");
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
 

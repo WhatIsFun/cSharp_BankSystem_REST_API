@@ -15,202 +15,182 @@ namespace cSharp_BankSystem_REST_API.Controllers
         {
             _context = DB;
         }
+
         [HttpPut("Deposit")]
-        public void deposit(List<Account> userAccounts, int sourceAccountId, decimal amount)
+        public IActionResult Deposit(List<Account> userAccounts, int sourceAccountId, decimal amount)
         {
-
-            if (userAccounts.Count == 0)
+            try
             {
-                Console.WriteLine("Add account first");
-                return;
-            }
-            else if (!userAccounts.Any(account => account.Account_Id == sourceAccountId))
-            {
-                Console.WriteLine("Enter a valid account number.");
-                return;
-            }
-            using (var context = new ApplicationDbContext())
-            {
-                try
+                if (userAccounts.Count == 0)
                 {
-                    string type = "Deposit";
-                    DateTime Timestamp = DateTime.Now;
-                    var dAccount = context.Accounts.FirstOrDefault(a => a.Account_Id == sourceAccountId);
-
-                    if (dAccount != null)
-                    {
-                        dAccount.Balance += amount;
-                        context.SaveChanges();
-
-                        RecordTransaction(Timestamp, type, amount, sourceAccountId, sourceAccountId, sourceAccountId);
-                        Console.WriteLine("Transaction deposit added");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Invalid deposit.");
-                    }
+                    return BadRequest("Add an account first.");
                 }
-                catch (Exception e)
+                else if (!userAccounts.Any(account => account.Account_Id == sourceAccountId))
                 {
-                    Console.WriteLine(e.Message);
-                    return;
+                    return BadRequest("Enter a valid account number.");
                 }
+
+                DateTime timestamp = DateTime.Now;
+                string type = "Deposit";
+
+                var dAccount = _context.Accounts.FirstOrDefault(a => a.Account_Id == sourceAccountId);
+
+                if (dAccount != null)
+                {
+                    dAccount.Balance += amount;
+                    _context.SaveChanges();
+
+                    RecordTransaction(timestamp, type, amount, sourceAccountId, sourceAccountId, sourceAccountId);
+                    return Ok("Transaction deposit added.");
+                }
+                else
+                {
+                    return NotFound("Invalid deposit.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
-        [HttpPut("Withdraw")]
-        public void withdraw(List<Account> userAccounts, int sourceAccountId, decimal amount)
-        {
-            if (userAccounts.Count == 0)
-            {
-                Console.WriteLine("Add account first");
-                return;
-            }
-            else if (!userAccounts.Any(account => account.Account_Id == sourceAccountId))
-            {
-                Console.WriteLine("Enter a valid account number.");
-                return;
-            }
-            using (var context = new ApplicationDbContext())
-            {
-                try
-                {
-                    string type = "Withdrawal";
-                    DateTime Timestamp = DateTime.Now;
-                    var dAccount = context.Accounts.FirstOrDefault(a => a.Account_Id == sourceAccountId);
 
-                    if (dAccount != null)
+        [HttpPut("Withdraw")]
+        public IActionResult Withdraw(List<Account> userAccounts, int sourceAccountId, decimal amount)
+        {
+            try
+            {
+                if (userAccounts.Count == 0)
+                {
+                    return BadRequest("Add an account first.");
+                }
+                else if (!userAccounts.Any(account => account.Account_Id == sourceAccountId))
+                {
+                    return BadRequest("Enter a valid account number.");
+                }
+
+                DateTime timestamp = DateTime.Now;
+                string type = "Withdrawal";
+
+                var dAccount = _context.Accounts.FirstOrDefault(a => a.Account_Id == sourceAccountId);
+
+                if (dAccount != null)
+                {
+                    if (dAccount.Balance >= amount)
                     {
                         dAccount.Balance -= amount;
-                        context.SaveChanges();
+                        _context.SaveChanges();
 
-                        RecordTransaction(Timestamp, type, amount, sourceAccountId, sourceAccountId, sourceAccountId);
-                        Console.WriteLine("Transaction Withdrawal added");
+                        RecordTransaction(timestamp, type, amount, sourceAccountId, sourceAccountId, sourceAccountId);
+                        return Ok("Transaction Withdrawal added.");
                     }
                     else
                     {
-                        Console.WriteLine("Invalid withdraw.");
+                        return BadRequest("Insufficient funds for the withdrawal.");
                     }
                 }
-                catch (Exception e)
+                else
                 {
-                    Console.WriteLine(e.Message);
-                    return;
+                    return NotFound("Invalid withdrawal.");
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
+            }
         }
+
         [HttpPut("Transfer")]
-        public void transfer(List<Account> userAccounts, int sourceAccountId, int targetAccountId, decimal amount)
+        public IActionResult Transfer(List<Account> userAccounts, int sourceAccountId, int targetAccountId, decimal amount)
         {
-            DateTime Timestamp = DateTime.Now;
-            using (var context = new ApplicationDbContext())
+            try
             {
-                try
+                DateTime timestamp = DateTime.Now;
+                var sourceAccount = _context.Accounts.FirstOrDefault(a => a.Account_Id == sourceAccountId);
+                var targetAccount = _context.Accounts.FirstOrDefault(a => a.Account_Id == targetAccountId);
+
+                if (sourceAccount == null || targetAccount == null)
                 {
-                    var sourceAccount = context.Accounts.FirstOrDefault(a => a.Account_Id == sourceAccountId);
-                    var targetAccount = context.Accounts.FirstOrDefault(a => a.Account_Id == targetAccountId);
-
-                    if (sourceAccount == null || targetAccount == null)
-                    {
-                        Console.WriteLine("Source or target account not found.");
-                        return;
-                    }
-                    Console.Write("Enter the amount to transfer: ");
-                    if (sourceAccount.Balance >= amount)
-                    {
-                        // Perform the transfer
-                        string type = "Transfer";
-                        //string Timestamp1 = time;
-
-
-                        sourceAccount.Balance -= amount;
-                        targetAccount.Balance += amount;
-
-                        context.SaveChanges();
-
-                        RecordTransaction(Timestamp, type, amount, sourceAccountId, targetAccountId, sourceAccountId);
-                        Console.WriteLine("Transaction added");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Insufficient funds for the transfer.");
-                    }
+                    return NotFound("Source or target account not found.");
                 }
-                catch (Exception e)
+
+                if (sourceAccount.Balance >= amount)
                 {
-                    Console.WriteLine(e.Message);
-                    return;
+                    string type = "Transfer";
+
+                    sourceAccount.Balance -= amount;
+                    targetAccount.Balance += amount;
+                    _context.SaveChanges();
+
+                    RecordTransaction(timestamp, type, amount, sourceAccountId, targetAccountId, sourceAccountId);
+                    return Ok("Transaction added.");
                 }
+                else
+                {
+                    return BadRequest("Insufficient funds for the transfer.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
 
-        private void RecordTransaction(DateTime Timestamp1, string type, decimal amount, int sourceAccountId, int targetAccountId, int accountNum)
+        private void RecordTransaction(DateTime timestamp, string type, decimal amount, int sourceAccountId, int targetAccountId, int accountNum)
         {
-            using (var context = new ApplicationDbContext())
+            try
             {
-                try
+                var transaction = new Transaction
                 {
-                    var transaction = new Transaction
-                    {
-                        Timestamp = Timestamp1,
-                        Type = type,
-                        Amount = amount,
-                        SorAccId = sourceAccountId,
-                        TarAccId = targetAccountId,
-                        User_Id = accountNum
-                    };
+                    Timestamp = timestamp,
+                    Type = type,
+                    Amount = amount,
+                    SorAccId = sourceAccountId,
+                    TarAccId = targetAccountId,
+                    User_Id = accountNum
+                };
 
-                    context.Transactions.Add(transaction);
-                    int rowsAffected = context.SaveChanges();
+                _context.Transactions.Add(transaction);
+                int rowsAffected = _context.SaveChanges();
 
-                    if (rowsAffected > 0)
-                    {
-                        Console.WriteLine("Transaction recorded successfully.");
-                    }
-                    else
-                    {
-                        Console.WriteLine("Failed to record the transaction.");
-                    }
+                if (rowsAffected > 0)
+                {
+                    Console.WriteLine("Transaction recorded successfully.");
                 }
-                catch (Exception e)
+                else
                 {
-                    Console.WriteLine("An error occurred while recording the transaction: " + e.Message);
+                    Console.WriteLine("Failed to record the transaction.");
                 }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine("An error occurred while recording the transaction: " + e.Message);
+            }
         }
+
         [HttpGet("Recording")]
-        public void ViewTransactionHistory(User authenticatedUser, int viewAccId, DateTime startDate)
+        public IActionResult ViewTransactionHistory(User authenticatedUser, int viewAccId, DateTime startDate)
         {
-            using (var context = new ApplicationDbContext())
+            try
             {
-                try
-                {
-                    var transactions = context.Transactions
-                        .Where(t => (t.SorAccId == viewAccId || t.TarAccId == viewAccId) && t.Timestamp >= startDate)
-                        .OrderByDescending(t => t.Timestamp)
-                        .ToList();
-                    if (transactions == null)
-                    {
-                        Console.WriteLine("No transaction history found.");
-                    }
-                    else
-                    {
+                var transactions = _context.Transactions
+                    .Where(t => (t.SorAccId == viewAccId || t.TarAccId == viewAccId) && t.Timestamp >= startDate)
+                    .OrderByDescending(t => t.Timestamp)
+                    .ToList();
 
-                        foreach (var transaction in transactions)
-                        {
-                            Console.WriteLine($"Transaction ID: {transaction.T_Id}");
-                            Console.WriteLine($"Timestamp:      {transaction.Timestamp}");
-                            Console.WriteLine($"Type:           {transaction.Type}");
-                            Console.WriteLine($"Amount:         {transaction.Amount} OMR");
-                            Console.WriteLine($"Source Account: {transaction.SorAccId}");
-                            Console.WriteLine($"Target Account: {transaction.TarAccId}");
-                            Console.WriteLine("---------------------------");
-                        }
-                    }
-                }
-                catch (Exception e)
+                if (transactions == null || transactions.Count == 0)
                 {
-                    Console.WriteLine("An error occurred: " + e.Message);
+                    return NotFound("No transaction history found.");
                 }
+
+                return Ok(transactions);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An error occurred: " + e.Message);
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
     }

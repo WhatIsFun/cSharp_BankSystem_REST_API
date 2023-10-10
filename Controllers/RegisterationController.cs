@@ -43,8 +43,6 @@ namespace cSharp_BankSystem_REST_API.Controllers
                 Console.WriteLine(ex.Message);
                 return StatusCode(500, "An error occurred while processing your request.");
             }
-
-
         }
 
         private static bool IsValidEmail(string email)
@@ -67,7 +65,6 @@ namespace cSharp_BankSystem_REST_API.Controllers
         {
             try
             {
-                var _context = new ApplicationDbContext();
                 var usr1 = new User { Name = name, Email = email, Password = password };
                 _context.Add(usr1);
                 _context.SaveChanges();
