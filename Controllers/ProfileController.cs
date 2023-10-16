@@ -1,4 +1,5 @@
 ﻿using cSharp_BankSystem_REST_API.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,7 +15,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
         {
             _context = DB;
         }
-
+        [Authorize]
         [HttpPost("CreatAccount")]
         public IActionResult CreateAccount(User authenticatedUser, decimal initialBalance)
         {
@@ -48,7 +49,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
                 Console.WriteLine(e.Message);
             }
         }
-
+        [Authorize]
         [HttpGet("getUserAccount")]
         public IActionResult GetUserAccounts(int userId)
         {
@@ -72,7 +73,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
 
             return accounts;
         }
-
+        [Authorize]
         [HttpDelete("deleteUserAccount")]
         public IActionResult DeleteAccountServer(int accountIdToDelete)
         {
@@ -99,7 +100,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
-
+        [Authorize]
         [HttpDelete("deleteUser")]
         public IActionResult DeleteUserServer(int userIdToDelete)
         {

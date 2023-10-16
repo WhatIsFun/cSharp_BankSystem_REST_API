@@ -1,4 +1,5 @@
 ﻿using cSharp_BankSystem_REST_API.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
         {
             _context = DB;
         }
-
+        [Authorize]
         [HttpPut("Deposit")]
         public IActionResult Deposit(List<Account> userAccounts, int sourceAccountId, decimal amount)
         {
@@ -54,7 +55,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
-
+        [Authorize]
         [HttpPut("Withdraw")]
         public IActionResult Withdraw(List<Account> userAccounts, int sourceAccountId, decimal amount)
         {
@@ -100,7 +101,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
                 return StatusCode(500, "An error occurred while processing your request.");
             }
         }
-
+        [Authorize]
         [HttpPut("Transfer")]
         public IActionResult Transfer(List<Account> userAccounts, int sourceAccountId, int targetAccountId, decimal amount)
         {
@@ -169,7 +170,7 @@ namespace cSharp_BankSystem_REST_API.Controllers
                 Console.WriteLine("An error occurred while recording the transaction: " + e.Message);
             }
         }
-
+        [Authorize]
         [HttpGet("Recording")]
         public IActionResult ViewTransactionHistory(User authenticatedUser, int viewAccId, DateTime startDate)
         {
